@@ -541,7 +541,7 @@ Best wishes,
 KNOWLEDGE BASE:
 ${KNOWLEDGE_BASE_TEXT}`;
 
-async function callGemini(apiKey, customerMessage) {
+async function callGemini(customerMessage) {
   const url = `https://repose-gemini-proxy.hvangeertruyden.workers.dev/`;
   const res = await fetch(url, {
     method: 'POST',
@@ -777,12 +777,11 @@ function NewContact({ onBack, onFlagScreen, onDraftScreen }) {
   async function handleSubmit(e) {
     e.preventDefault(); setError('');
     if (!message.trim()) { setError('Paste the customer message before submitting.'); return; }
-    const apiKey = getApiKey();
-    if (!apiKey) { setError('No API key found. Sign out and sign back in to enter one.'); return; }
+
     setLoading(true);
     const t = setTimeout(() => setLoadingMsg('Assessing for flags...'), 2500);
     try {
-      const raw = await callGemini(apiKey, message.trim());
+      const raw = await callGemini(message.trim());
       clearTimeout(t);
       const { flags, draftRaw } = parseGeminiResponse(raw);
       const contactData = {
