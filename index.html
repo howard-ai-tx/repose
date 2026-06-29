@@ -594,7 +594,7 @@ KNOWLEDGE BASE:
 ${KNOWLEDGE_BASE_TEXT}`;
 
 async function callGemini(customerMessage) {
-  const url = `https://repose-gemini-proxy.hvangeertruyden.workers.dev/`;
+  const url = `https://repose-gemini-proxy.hvangeertruyden.workers.dev/gemini`;
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -923,13 +923,16 @@ function FlagScreen({ contactData, onProceedToDraft, onDone }) {
   const [acked, setAcked] = useState({});
   const allAcked = softFlags.every((_, i) => acked[i]);
 
-  function handleForward(flag) {
+  async function handleForward(flag) {
     const d = getFlagDetails(flag);
     saveContact({ ...contactData, status: 'forwarded', finalResponse: `Flagged — forwarded to ${d.forwardLabel || 'Information Services'}`, repName: getRepFullName(), loggedAt: new Date().toISOString() });
-    const subj = encodeURIComponent(`[Repose Escalation] ${contactData.subject || 'Customer message'}`);
-    const body = encodeURIComponent(`This message has been escalated via Repose.\n\nFlag: ${flag.name.toUpperCase()}\n\n---\n\nOriginal customer message:\n\n${contactData.customerMessage}`);
-    const cc = getRepEmail() ? `&cc=${encodeURIComponent(getRepEmail())}` : '';
-    window.location.href = `mailto:${d.forwardTo || 'is@howardai.us'}?subject=${subj}${cc}&body=${body}`;
+    const subject = `[Repose Escalation] ${contactData.subject || 'Customer message'}`;
+    const body = `This message has been escalated via Repose.\n\nFlag: ${flag.name.toUpperCase()}\nEscalated by: ${getRepFullName()} <${getRepEmail()}>\n\n---\n\nOriginal customer message:\n\n${contactData.customerMessage}`;
+    await fetch('https://repose-gemini-proxy.hvangeertruyden.workers.dev/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: d.forwardTo || 'is@howardai.us', cc: getRepEmail(), subject, body }),
+    });
     onDone();
   }
 
@@ -1002,23 +1005,33 @@ function DraftScreen({ contactData, onDone, onViewContact }) {
   const segments = useMemo(() => parseDraftSegments(contactData.geminiDraft), [contactData.geminiDraft]);
   const zones = segments.filter(s => s.type === 'zone');
   const [values, setValues] = useState({});
-  const [mailtoFired, setMailtoFired] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState('');
   const draft = useMemo(() => assembleDraft(segments, values), [segments, values]);
   const filled = zones.filter(z => (values[z.id] || '').trim()).length;
   const customerName = contactData.customerName || '';
   const repFull = getRepFullName();
 
-  function openMail() {
-    const to = contactData.customerEmail || '';
+  async function sendToCustomer() {
+    setSending(true); setSendError('');
     const cleanBody = buildCleanDraft(segments, values, customerName, repFull);
-    window.location.href = `mailto:${to}?subject=${encodeURIComponent(contactData.subject || 'Re: Your Howard inquiry')}&body=${encodeURIComponent(cleanBody)}`;
-    setMailtoFired(true);
-  }
-
-  function markSent() {
-    const cleanDraft = buildCleanDraft(segments, values, customerName, repFull);
-    const c = { ...contactData, finalResponse: cleanDraft, status: 'sent', repName: getRepFullName(), loggedAt: new Date().toISOString() };
-    saveContact(c); onViewContact(c.id);
+    try {
+      const res = await fetch('https://repose-gemini-proxy.hvangeertruyden.workers.dev/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: contactData.customerEmail || '',
+          subject: contactData.subject || 'Re: Your Howard inquiry',
+          body: cleanBody,
+        }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Send failed.');
+      const c = { ...contactData, finalResponse: cleanBody, status: 'sent', repName: getRepFullName(), loggedAt: new Date().toISOString() };
+      saveContact(c); onViewContact(c.id);
+    } catch (e) {
+      setSendError(e.message); setSending(false);
+    }
   }
 
   return (
@@ -1051,7 +1064,10 @@ function DraftScreen({ contactData, onDone, onViewContact }) {
             )}
           </div>
           <div className="draft-panel-footer">
-            <button className="btn btn-primary" onClick={openMail}><i className="ti ti-mail" /> Open in Mail</button>
+            {sendError && <div className="alert alert-error" style={{ marginBottom: 8 }}><i className="ti ti-alert-circle" /><div className="alert-body">{sendError}</div></div>}
+            <button className="btn btn-primary" onClick={sendToCustomer} disabled={sending || !contactData.customerEmail}>
+              <i className="ti ti-send" /> {sending ? 'Sending…' : 'Send to Customer'}
+            </button>
             <button className="btn btn-secondary" onClick={onDone}>Cancel</button>
           </div>
         </div>
@@ -1067,23 +1083,8 @@ function DraftScreen({ contactData, onDone, onViewContact }) {
                 }</span>
             )}
           </div>
-          {mailtoFired && (
-            <div className="draft-panel-footer">
-              <button className="btn btn-primary" onClick={markSent}><i className="ti ti-check" /> Mark as Sent — Log Contact</button>
-            </div>
-          )}
         </div>
       </div>
-
-      {mailtoFired && (
-        <div className="alert alert-info" style={{ marginTop: 16, maxWidth: 1200 }}>
-          <i className="ti ti-mail-forward" aria-hidden="true" />
-          <div className="alert-body flex-1">
-            <strong>Email opened in your mail client.</strong> Once you've sent it, click <em>Mark as Sent</em> to log this contact.
-          </div>
-          <button className="btn btn-primary btn-sm" onClick={markSent}><i className="ti ti-check" /> Mark as Sent</button>
-        </div>
-      )}
     </div>
   );
 }
