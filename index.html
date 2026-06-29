@@ -667,14 +667,6 @@ function Login({ onLogin }) {
           <p style={{ marginTop: 4 }}>Howard AI · Customer Service</p>
         </div>
 
-        {isFirst && (
-          <div className="alert alert-info">
-            <i className="ti ti-info-circle" aria-hidden="true" />
-            <div className="alert-body">
-              <strong>First time?</strong> Default credentials are <code>howard.cs</code> / <code>repose2024</code>.
-            </div>
-          </div>
-        )}
 
         {error && (
           <div className="alert alert-error" role="alert">
