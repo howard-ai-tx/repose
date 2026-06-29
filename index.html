@@ -648,7 +648,7 @@ function applySubstitutions(text, customerFirstName, repFullName, repRole) {
   const firstName = (customerFirstName || '').split(' ')[0].trim() || 'there';
   t = t.replace(/\[name\]/g, firstName);
   // Replace [Name] with rep full name + role
-  t = t.replace(/\[Name\]/g, `${repFullName}, Customer Experience — Howard AI`);
+  t = t.replace(/\[Name\]/g, `${repFullName}\nCustomer Experience Representative\nHowardAI`);
   return t;
 }
 
