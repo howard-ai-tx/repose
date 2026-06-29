@@ -542,17 +542,28 @@ If a Hard Caution fired: No draft generated. Forward to [destination] per flag i
 If no Hard Caution, produce the draft:
 
 [GREETING]
-Hey [name], — match tone flag if one fired.
+Hey [name],
+
+[PERSONALIZE: Opening zone — acknowledge the customer specifically. Who are they, what prompted their message, what is their specific situation? Reference what they actually said. Do not write generic warmth — point directly at the detail that makes this message unique.]
 
 [BODY]
-Assemble relevant knowledge base content. Clean, factual, no personality. One paragraph per topic. Do not connect content to the customer's specific situation.
+Assemble relevant knowledge base content here. Clean, factual, no personality. One paragraph per topic. Do not connect content to the customer's specific situation — that is the rep's job.
 
-Mark personalization zones:
-[PERSONALIZE: one-sentence instruction describing exactly what the rep needs to write here]
+At least once within the body, insert a mid-body zone at the point where the rep must connect the library content to the customer's specific situation:
+[PERSONALIZE: Mid-body zone — instruct the rep to connect the knowledge base content above to the customer's specific situation. Name the exact detail from the customer's message that needs connecting. Be precise — not "add a personal touch" but "the customer mentioned X — connect that to Y."]
 
 [SIGN-OFF]
+[PERSONALIZE: Closing zone — instruct the rep to close with something specific to this conversation. Reference what was discussed. No formulas, no generic sign-offs — what would a human say to THIS customer at the end of THIS exchange?]
+
 Best wishes,
 [Name]
+
+PERSONALIZATION ZONE RULES — READ CAREFULLY:
+RULE A — MINIMUM THREE ZONES: Every response must contain at least three personalization zones — one opening (immediately after greeting), at least one mid-body, one closing (before sign-off). If you cannot find three genuine places for human input, you are not looking hard enough.
+RULE B — ZONES CONTAIN INSTRUCTIONS ONLY: The zone text box must be empty when it reaches the rep. You write the instruction. The rep writes the content. Never pre-fill a zone with example sentences, filler warmth, or placeholder copy.
+RULE C — INSTRUCTIONS MUST BE SPECIFIC: Every zone instruction must reference what the customer actually said. "Acknowledge their interest" is wrong. "The customer mentioned they run an espresso truck expanding to a second location — acknowledge that specific context and connect Howard's administrative capabilities to what day-to-day growth looks like for a small food business" is correct.
+RULE D — WRONG ZONE FORMAT (never do this): [PERSONALIZE: Privacy is our highest priority at Howard. We will always put you first.] — this is Gemini doing the rep's job.
+RULE E — CORRECT ZONE FORMAT: [PERSONALIZE: the customer expressed a specific privacy concern about X — acknowledge what exactly they said and connect it to how Howard handles that.]
 
 KNOWLEDGE BASE:
 ${KNOWLEDGE_BASE_TEXT}`;
@@ -628,6 +639,22 @@ function parseDraftSegments(draft) {
 
 function assembleDraft(segments, values) {
   return segments.map(s => s.type === 'text' ? s.content : (values[s.id] || `[PERSONALIZE: ${s.instruction}]`)).join('');
+}
+
+function applySubstitutions(text, customerFirstName, repFullName, repRole) {
+  // Strip structural section tags
+  let t = text.replace(/\[GREETING\]\n?/g, '').replace(/\[BODY\]\n?/g, '').replace(/\[SIGN-OFF\]\n?/g, '');
+  // Replace [name] with customer first name, fallback to "there"
+  const firstName = (customerFirstName || '').split(' ')[0].trim() || 'there';
+  t = t.replace(/\[name\]/g, firstName);
+  // Replace [Name] with rep full name + role
+  t = t.replace(/\[Name\]/g, `${repFullName}, Customer Experience — Howard AI`);
+  return t;
+}
+
+function buildCleanDraft(segments, values, customerName, repFullName) {
+  const raw = segments.map(s => s.type === 'text' ? s.content : (values[s.id] || '')).join('');
+  return applySubstitutions(raw, customerName, repFullName);
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -953,10 +980,13 @@ function DraftScreen({ contactData, onDone, onViewContact }) {
   const [mailtoFired, setMailtoFired] = useState(false);
   const draft = useMemo(() => assembleDraft(segments, values), [segments, values]);
   const filled = zones.filter(z => (values[z.id] || '').trim()).length;
+  const customerName = contactData.customerName || '';
+  const repFull = getRepFullName();
 
   function openMail() {
     const to = contactData.customerEmail || '';
-    window.location.href = `mailto:${to}?subject=${encodeURIComponent(contactData.subject || 'Re: Your Howard inquiry')}&body=${encodeURIComponent(draft)}`;
+    const cleanBody = buildCleanDraft(segments, values, customerName, repFull);
+    window.location.href = `mailto:${to}?subject=${encodeURIComponent(contactData.subject || 'Re: Your Howard inquiry')}&body=${encodeURIComponent(cleanBody)}`;
     setMailtoFired(true);
   }
 
@@ -986,7 +1016,7 @@ function DraftScreen({ contactData, onDone, onViewContact }) {
           </div>
           <div className="draft-panel-body">
             {segments.map((seg, i) => seg.type === 'text'
-              ? <span key={i} className="draft-text">{seg.content}</span>
+              ? <span key={i} className="draft-text">{applySubstitutions(seg.content, customerName, repFull)}</span>
               : <div key={i} className="personalize-zone">
                   <div className="personalize-label"><i className="ti ti-pencil" style={{ fontSize: 13, marginRight: 4 }} />Personalize</div>
                   <div className="personalize-instruction">{seg.instruction}</div>
@@ -1004,7 +1034,7 @@ function DraftScreen({ contactData, onDone, onViewContact }) {
           <div className="draft-panel-header"><span className="draft-panel-label">Live Preview</span></div>
           <div className="draft-panel-body">
             {segments.map((seg, i) => seg.type === 'text'
-              ? <span key={i} className="draft-text">{seg.content}</span>
+              ? <span key={i} className="draft-text">{applySubstitutions(seg.content, customerName, repFull)}</span>
               : <span key={i}>{(values[seg.id] || '').trim()
                   ? <span className="draft-text">{values[seg.id]}</span>
                   : <span className="preview-placeholder">[{seg.instruction}]</span>
