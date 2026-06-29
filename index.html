@@ -1162,12 +1162,31 @@ function ContactDetail({ contactId, onBack }) {
   const [notes, setNotes] = useState('');
   const [saved, setSaved] = useState(false);
   const [showRemForm, setShowRemForm] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editTimestamp, setEditTimestamp] = useState('');
+  const [editAction, setEditAction] = useState('');
+  const admin = isAdmin();
   const [remType, setRemType] = useState('time');
   const [remCopy, setRemCopy] = useState('');
   const [remDate, setRemDate] = useState('');
   const [remEvent, setRemEvent] = useState('');
 
-  function refresh() { const c = getContact(contactId); setContact(c); if (c) setNotes(c.notes||''); }
+  function refresh() {
+    const c = getContact(contactId); setContact(c);
+    if (c) { setNotes(c.notes||''); setEditName(c.customerName||''); setEditEmail(c.customerEmail||''); setEditTimestamp(c.loggedAt||c.createdAt||''); setEditAction(c.finalResponse||''); }
+  }
+
+  function saveAdminEdits() {
+    updateContact(contact.id, { customerName: editName, customerEmail: editEmail, loggedAt: editTimestamp, finalResponse: editAction });
+    setEditing(false); refresh();
+  }
+
+  function deleteRecord() {
+    if (!window.confirm(`Permanently delete the record for ${contact.customerName}? This cannot be undone.`)) return;
+    const cs = getContacts().filter(c => c.id !== contact.id); saveContacts(cs); onBack();
+  }
   useEffect(() => { refresh(); }, [contactId]);
 
   if (!contact) return (
@@ -1199,6 +1218,40 @@ function ContactDetail({ contactId, onBack }) {
         <div className="status-badge" style={{ fontSize: 14 }}><span className={`status-dot ${contact.status}`} />{contact.status === 'sent' ? 'Sent' : contact.status === 'forwarded' ? 'Forwarded' : 'Draft'}</div>
       </div>
 
+      {admin && (
+        <div className="detail-section" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: 'var(--s6)', marginBottom: 'var(--s6)' }}>
+          <div className="detail-section-header">
+            <div className="detail-section-label">Administration</div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {!editing && <button className="btn btn-secondary btn-sm" onClick={() => setEditing(true)}><i className="ti ti-edit" /> Edit record</button>}
+              {editing && <button className="btn btn-primary btn-sm" onClick={saveAdminEdits}><i className="ti ti-check" /> Save changes</button>}
+              {editing && <button className="btn btn-secondary btn-sm" onClick={() => { setEditing(false); refresh(); }}>Cancel</button>}
+              <button className="btn btn-destructive btn-sm" onClick={deleteRecord}><i className="ti ti-trash" /> Delete</button>
+            </div>
+          </div>
+          {editing && (
+            <div style={{ display: 'grid', gap: 12, marginTop: 8 }}>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Customer name</label>
+                <input className="form-input" value={editName} onChange={e => setEditName(e.target.value)} />
+              </div>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Customer email</label>
+                <input className="form-input" type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} />
+              </div>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Timestamp (logged at)</label>
+                <input className="form-input" type="datetime-local" value={editTimestamp ? editTimestamp.slice(0,16) : ''} onChange={e => setEditTimestamp(new Date(e.target.value).toISOString())} />
+              </div>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Action taken / response sent</label>
+                <textarea className="notes-area" rows={4} value={editAction} onChange={e => setEditAction(e.target.value)} />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {(contact.flagsFired||[]).length > 0 && (
         <div className="detail-section">
           <div className="detail-section-label">Flags fired</div>
@@ -1225,7 +1278,7 @@ function ContactDetail({ contactId, onBack }) {
               <div className="detail-section-label" style={{ margin: 0 }}>Gemini draft</div>
               <span className="flag-chip notice" style={{ marginLeft: 8 }}>Expand</span>
             </summary>
-            <div className="detail-message" style={{ marginTop: 12 }}>{contact.geminiDraft}</div>
+            <div className="detail-message" style={{ marginTop: 12 }}>{contact.geminiDraft.replace(/\[GREETING\]\n?/g,'').replace(/\[BODY\]\n?/g,'').replace(/\[SIGN-OFF\]\n?/g,'')}</div>
           </details>
         </div>
       )}
@@ -1314,7 +1367,7 @@ function App() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="sidebar-logo">
-          <img src="Repose-Logo.png" alt="Repose" style={{ height: 32, width: 'auto' }} />
+          <img src="Repose-Logo.png" alt="Repose" style={{ height: 44, width: 'auto' }} />
         </div>
         <nav className="sidebar-nav">
           <button className={`nav-item${activeNav==='dashboard'?' active':''}`} onClick={goHome}>
