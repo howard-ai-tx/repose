@@ -1168,6 +1168,8 @@ function ContactDetail({ contactId, onBack }) {
   const [editEmail, setEditEmail] = useState('');
   const [editTimestamp, setEditTimestamp] = useState('');
   const [editAction, setEditAction] = useState('');
+  const [editDateStr, setEditDateStr] = useState('');
+  const [editTimeStr, setEditTimeStr] = useState('');
   const admin = isAdmin();
   const [remType, setRemType] = useState('time');
   const [remCopy, setRemCopy] = useState('');
@@ -1176,11 +1178,22 @@ function ContactDetail({ contactId, onBack }) {
 
   function refresh() {
     const c = getContact(contactId); setContact(c);
-    if (c) { setNotes(c.notes||''); setEditName(c.customerName||''); setEditEmail(c.customerEmail||''); setEditTimestamp(c.loggedAt||c.createdAt||''); setEditAction(c.finalResponse||''); }
+    if (c) {
+      setNotes(c.notes||'');
+      setEditName(c.customerName||'');
+      setEditEmail(c.customerEmail||'');
+      setEditAction(c.finalResponse||'');
+      const ts = new Date(c.loggedAt||c.createdAt||'');
+      setEditDateStr(isNaN(ts) ? '' : ts.toLocaleDateString('en-US'));
+      setEditTimeStr(isNaN(ts) ? '' : ts.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
+    }
   }
 
   function saveAdminEdits() {
-    updateContact(contact.id, { customerName: editName, customerEmail: editEmail, loggedAt: editTimestamp, finalResponse: editAction });
+    let loggedAt = contact.loggedAt || contact.createdAt;
+    const combined = new Date(`${editDateStr} ${editTimeStr}`);
+    if (!isNaN(combined)) loggedAt = combined.toISOString();
+    updateContact(contact.id, { customerName: editName, customerEmail: editEmail, loggedAt, finalResponse: editAction });
     setEditing(false); refresh();
   }
 
@@ -1242,20 +1255,11 @@ function ContactDetail({ contactId, onBack }) {
               </div>
               <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label">Date (MM/DD/YYYY)</label>
-                <input className="form-input" value={editTimestamp ? new Date(editTimestamp).toLocaleDateString('en-US') : ''} onChange={e => {
-                  const d = new Date(editTimestamp || new Date());
-                  const parts = e.target.value.split('/');
-                  if (parts.length === 3) { d.setMonth(parseInt(parts[0])-1); d.setDate(parseInt(parts[1])); d.setFullYear(parseInt(parts[2])); if (!isNaN(d)) setEditTimestamp(d.toISOString()); }
-                  else setEditTimestamp(prev => prev);
-                }} placeholder="06/29/2026" />
+                <input className="form-input" value={editDateStr} onChange={e => setEditDateStr(e.target.value)} placeholder="06/29/2026" />
               </div>
               <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label">Time (HH:MM AM/PM)</label>
-                <input className="form-input" value={editTimestamp ? new Date(editTimestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : ''} onChange={e => {
-                  const d = new Date(editTimestamp || new Date());
-                  const match = e.target.value.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
-                  if (match) { let h = parseInt(match[1]); const m = parseInt(match[2]); const period = (match[3]||'').toUpperCase(); if (period === 'PM' && h < 12) h += 12; if (period === 'AM' && h === 12) h = 0; d.setHours(h); d.setMinutes(m); if (!isNaN(d)) setEditTimestamp(d.toISOString()); }
-                }} placeholder="12:16 PM" />
+                <input className="form-input" value={editTimeStr} onChange={e => setEditTimeStr(e.target.value)} placeholder="12:16 PM" />
               </div>
               <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label">Action taken / response sent</label>
