@@ -439,9 +439,9 @@ const { useState, useEffect, useMemo } = React;
 // ── Storage ───────────────────────────────────────────────────────────────────
 
 const DEFAULT_USERS = [
-  { firstName: 'Hendrik', lastName: 'Van Geertruyden', employeeId: '922135657', username: 'hvang', password: '20265657', role: 'Administration' },
-  { firstName: 'Tucker',  lastName: 'Pate',            employeeId: '929266759', username: 'tpate', password: '20266759', role: 'Administration' },
-  { firstName: 'Jane',    lastName: 'Doe',             employeeId: '',          username: 'jdoe',  password: 'test',     role: 'Customer Service' },
+  { firstName: 'Hendrik', lastName: 'Van Geertruyden', employeeId: '922135657', username: 'hvang', password: '20265657', role: 'Administration',   email: 'hvangeertruyden@howardai.us' },
+  { firstName: 'Tucker',  lastName: 'Pate',            employeeId: '929266759', username: 'tpate', password: '20266759', role: 'Administration',   email: 'tpate@howardai.us' },
+  { firstName: 'Jane',    lastName: 'Doe',             employeeId: '123456789', username: 'jdoe',  password: 'test',     role: 'Customer Service', email: 'hvangeertruyden@howardai.us' },
 ];
 function getUsers() {
   const raw = localStorage.getItem('repose_users');
@@ -455,6 +455,7 @@ function getLoggedInUser() {
 function getRepName() { const u = getLoggedInUser(); return u ? u.firstName : 'Rep'; }
 function getRepFullName() { const u = getLoggedInUser(); return u ? `${u.firstName} ${u.lastName}` : 'Rep'; }
 function getRepRole() { const u = getLoggedInUser(); return u ? u.role : 'Customer Service'; }
+function getRepEmail() { const u = getLoggedInUser(); return u ? u.email : ''; }
 function isAdmin() { return getRepRole() === 'Administration'; }
 function getApiKey() { return ''; }
 function setApiKey(k) {}
@@ -875,7 +876,8 @@ function FlagScreen({ contactData, onProceedToDraft, onDone }) {
     saveContact({ ...contactData, status: 'forwarded', finalResponse: `Flagged — forwarded to ${d.forwardLabel || 'Information Services'}`, repName: getRepFullName(), loggedAt: new Date().toISOString() });
     const subj = encodeURIComponent(`[Repose Escalation] ${contactData.subject || 'Customer message'}`);
     const body = encodeURIComponent(`This message has been escalated via Repose.\n\nFlag: ${flag.name.toUpperCase()}\n\n---\n\nOriginal customer message:\n\n${contactData.customerMessage}`);
-    window.location.href = `mailto:${d.forwardTo || 'is@howardai.us'}?subject=${subj}&body=${body}`;
+    const cc = getRepEmail() ? `&cc=${encodeURIComponent(getRepEmail())}` : '';
+    window.location.href = `mailto:${d.forwardTo || 'is@howardai.us'}?subject=${subj}${cc}&body=${body}`;
     onDone();
   }
 
