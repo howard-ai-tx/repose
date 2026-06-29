@@ -48,8 +48,8 @@
     .sidebar-footer { padding: var(--s4); border-top: 1px solid var(--border-light); }
     .rep-name { font-size: 14px; font-weight: 500; }
     .rep-role { font-size: 13px; color: var(--text-secondary); margin-top: 1px; }
-    .sign-out-btn { background: none; border: none; font-size: 13px; color: var(--text-placeholder); cursor: pointer; font-family: var(--font); margin-top: var(--s1); text-decoration: underline; text-underline-offset: 2px; padding: 0; }
-    .sign-out-btn:hover { color: var(--text-secondary); }
+    .sign-out-btn { background: none; border: none; font-size: 13px; color: var(--red); cursor: pointer; font-family: var(--font); margin-top: var(--s1); text-decoration: underline; text-underline-offset: 2px; padding: 0; }
+    .sign-out-btn:hover { color: var(--red-hover); }
     .main-area { flex: 1; overflow-y: auto; padding: var(--s8); }
 
     /* ── Mobile ──────────────────────────────────────────────────────────────── */
@@ -734,7 +734,7 @@ function Login({ onLogin }) {
     <div className="login-wrap">
       <div className="login-box">
         <div className="login-logo">
-          <img src="Repose-Logo.png" alt="Repose" style={{ height: 48, width: 'auto' }} />
+          <img src="Repose-Logo.png" alt="Repose" style={{ height: 72, width: 'auto' }} />
           <p style={{ marginTop: 4 }}>Howard AI · Customer Service</p>
         </div>
 
@@ -1381,7 +1381,7 @@ function App() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="sidebar-logo">
-          <img src="Repose-Logo.png" alt="Repose" style={{ height: 44, width: 'auto' }} />
+          <img src="Repose-Logo.png" alt="Repose" style={{ height: 54, width: 'auto' }} />
         </div>
         <nav className="sidebar-nav">
           <button className={`nav-item${activeNav==='dashboard'?' active':''}`} onClick={goHome}>
