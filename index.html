@@ -448,7 +448,8 @@ function getCredentials() {
 }
 function checkLogin(u, p) { const c = getCredentials(); return u === c.username && p === c.password; }
 function getRepName() { return getCredentials().repName || 'CS Rep'; }
-function getApiKey() { return localStorage.getItem('repose_gemini_key') || ''; }
+const SHARED_API_KEY = 'AQ.Ab8RN6JMkvn1U5gIHHlZo2JfhtKkEU71xtQEPxosffY4raDXbg';
+function getApiKey() { return localStorage.getItem('repose_gemini_key') || SHARED_API_KEY; }
 function setApiKey(k) { localStorage.setItem('repose_gemini_key', k.trim()); }
 function isLoggedIn() { return sessionStorage.getItem('repose_session') === 'true'; }
 function setLoggedIn(v) { v ? sessionStorage.setItem('repose_session', 'true') : sessionStorage.removeItem('repose_session'); }
@@ -656,14 +657,12 @@ function Login({ onLogin }) {
   const isFirst = !localStorage.getItem('repose_credentials');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [apiKey, setApiKeyLocal] = useState(getApiKey());
   const [error, setError] = useState('');
 
   function handleSubmit(e) {
     e.preventDefault(); setError('');
-    if (!apiKey.trim()) { setError('Enter your Gemini API key to continue.'); return; }
     if (!checkLogin(username, password)) { setError('Incorrect username or password.'); return; }
-    setApiKey(apiKey.trim()); setLoggedIn(true); onLogin();
+    setLoggedIn(true); onLogin();
   }
 
   return (
@@ -682,7 +681,6 @@ function Login({ onLogin }) {
             <i className="ti ti-info-circle" aria-hidden="true" />
             <div className="alert-body">
               <strong>First time?</strong> Default credentials are <code>howard.cs</code> / <code>repose2024</code>.
-              You'll also need a free Gemini API key from aistudio.google.com.
             </div>
           </div>
         )}
@@ -702,11 +700,6 @@ function Login({ onLogin }) {
           <div className="form-group">
             <label className="form-label" htmlFor="l-pass">Password</label>
             <input id="l-pass" className="form-input" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" autoComplete="current-password" />
-          </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="l-key">Gemini API Key</label>
-            <input id="l-key" className="form-input" type="password" value={apiKey} onChange={e => setApiKeyLocal(e.target.value)} placeholder="AIza..." autoComplete="off" />
-            <div className="form-helper">Stored locally on this device only.</div>
           </div>
           <button className="btn btn-primary" type="submit" style={{ width: '100%', marginTop: 8 }}>Sign in</button>
         </form>
