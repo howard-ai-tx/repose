@@ -439,8 +439,9 @@ const { useState, useEffect, useMemo } = React;
 // ── Storage ───────────────────────────────────────────────────────────────────
 
 const DEFAULT_USERS = [
-  { firstName: 'Hendrik', lastName: 'Van Geertruyden', employeeId: '922135657', username: 'hvang', password: '20265657' },
-  { firstName: 'Tucker',  lastName: 'Pate',            employeeId: '929266759', username: 'tpate', password: '20266759' },
+  { firstName: 'Hendrik', lastName: 'Van Geertruyden', employeeId: '922135657', username: 'hvang', password: '20265657', role: 'Administration' },
+  { firstName: 'Tucker',  lastName: 'Pate',            employeeId: '929266759', username: 'tpate', password: '20266759', role: 'Administration' },
+  { firstName: 'Jane',    lastName: 'Doe',             employeeId: '',          username: 'jdoe',  password: 'test',     role: 'Customer Service' },
 ];
 function getUsers() {
   const raw = localStorage.getItem('repose_users');
@@ -453,6 +454,8 @@ function getLoggedInUser() {
 }
 function getRepName() { const u = getLoggedInUser(); return u ? u.firstName : 'Rep'; }
 function getRepFullName() { const u = getLoggedInUser(); return u ? `${u.firstName} ${u.lastName}` : 'Rep'; }
+function getRepRole() { const u = getLoggedInUser(); return u ? u.role : 'Customer Service'; }
+function isAdmin() { return getRepRole() === 'Administration'; }
 function getApiKey() { return ''; }
 function setApiKey(k) {}
 function isLoggedIn() { return sessionStorage.getItem('repose_session') === 'true'; }
@@ -712,7 +715,7 @@ function Dashboard({ repName, onNewContact, onViewContact }) {
   const [contacts, setContacts] = useState([]);
   const [reminders, setReminders] = useState([]);
 
-  function refresh() { setContacts(getContacts().slice(0, 20)); setReminders(getActiveReminders()); }
+  function refresh() { setContacts(getContacts().filter(c => isAdmin() || c.repName === getRepFullName()).slice(0, 20)); setReminders(getActiveReminders()); }
   useEffect(() => { refresh(); }, []);
 
   function handleDismiss(contactId, reminderId) { dismissReminder(contactId, reminderId); refresh(); }
@@ -833,7 +836,7 @@ function NewContact({ onBack, onFlagScreen, onDraftScreen }) {
         <div className="form-row-2">
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label className="form-label" htmlFor="nc-name">Customer name</label>
-            <input id="nc-name" className="form-input" type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Jane Smith" />
+            <input id="nc-name" className="form-input" type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Jane Smith" autoComplete="off" />
           </div>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label className="form-label" htmlFor="nc-email">Customer email</label>
@@ -1033,7 +1036,7 @@ function Records({ onViewContact }) {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterFlag, setFilterFlag] = useState('all');
-  const all = getContacts();
+  const all = getContacts().filter(c => isAdmin() || c.repName === getRepFullName());
 
   const filtered = useMemo(() => all.filter(c => {
     const q = search.toLowerCase();
@@ -1269,7 +1272,7 @@ function App() {
         </nav>
         <div className="sidebar-footer">
           <div className="rep-name">{getRepFullName()}</div>
-          <div className="rep-role">Customer Service</div>
+          <div className="rep-role">{getRepRole()}</div>
           <button className="sign-out-btn" onClick={() => { setLoggedIn(false); setAuthed(false); setFlow(null); }}>Sign out</button>
         </div>
       </aside>
