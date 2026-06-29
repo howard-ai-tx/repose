@@ -443,9 +443,8 @@ function getCredentials() {
 }
 function checkLogin(u, p) { const c = getCredentials(); return u === c.username && p === c.password; }
 function getRepName() { return getCredentials().repName || 'CS Rep'; }
-const SHARED_API_KEY = 'AQ.Ab8RN6JMkvn1U5gIHHlZo2JfhtKkEU71xtQEPxosffY4raDXbg';
-function getApiKey() { return localStorage.getItem('repose_gemini_key') || SHARED_API_KEY; }
-function setApiKey(k) { localStorage.setItem('repose_gemini_key', k.trim()); }
+function getApiKey() { return ''; }
+function setApiKey(k) {}
 function isLoggedIn() { return sessionStorage.getItem('repose_session') === 'true'; }
 function setLoggedIn(v) { v ? sessionStorage.setItem('repose_session', 'true') : sessionStorage.removeItem('repose_session'); }
 function getContacts() { const r = localStorage.getItem('repose_contacts'); return r ? JSON.parse(r) : []; }
@@ -542,7 +541,7 @@ KNOWLEDGE BASE:
 ${KNOWLEDGE_BASE_TEXT}`;
 
 async function callGemini(apiKey, customerMessage) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  const url = `https://repose-gemini-proxy.hvangeertruyden.workers.dev/`;
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
