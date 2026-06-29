@@ -529,7 +529,7 @@ RULE 2 — THE LIBRARY RULE: Only use information from the knowledge base. If th
 
 RULE 3 — THE INFERENCE RULE: Do not connect knowledge base content to the customer's specific situation. That is the rep's job.
 
-RULE 4 — THE STEPPING BACK RULE: When the knowledge base has nothing relevant, produce almost nothing. A greeting placeholder, a personalization zone, and a sign-off.
+RULE 4 — THE STEPPING BACK RULE: When the knowledge base has nothing relevant, produce almost nothing — a greeting placeholder, a personalization zone, and a sign-off. The sign-off with [Name] is ALWAYS required, even in minimal drafts. Never omit it.
 
 RULE 5 — THE FLAG RULE: Assess every message for flags before drafting. When a Hard Caution fires, do not generate a draft.
 
@@ -672,8 +672,12 @@ function applySubstitutions(text, customerFirstName, repFullName, repRole) {
   // Replace [name] with customer first name, fallback to "there"
   const firstName = (customerFirstName || '').split(' ')[0].trim() || 'there';
   t = t.replace(/\[name\]/g, firstName);
-  // Replace [Name] with rep full name + role
-  t = t.replace(/\[Name\]/g, `${repFullName}\nCustomer Experience Representative\nHowardAI`);
+  // Replace [Name] with rep full name + role, append sign-off if missing
+  if (t.includes('[Name]')) {
+    t = t.replace(/\[Name\]/g, `${repFullName}\nCustomer Experience Representative\nHowardAI`);
+  } else {
+    t = t.trimEnd() + `\n\nBest wishes,\n${repFullName}\nCustomer Experience Representative\nHowardAI`;
+  }
   return t;
 }
 
