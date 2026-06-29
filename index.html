@@ -1241,8 +1241,21 @@ function ContactDetail({ contactId, onBack }) {
                 <input className="form-input" type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} />
               </div>
               <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label">Timestamp (logged at)</label>
-                <input className="form-input" type="datetime-local" value={editTimestamp ? editTimestamp.slice(0,16) : ''} onChange={e => setEditTimestamp(new Date(e.target.value).toISOString())} />
+                <label className="form-label">Date (MM/DD/YYYY)</label>
+                <input className="form-input" value={editTimestamp ? new Date(editTimestamp).toLocaleDateString('en-US') : ''} onChange={e => {
+                  const d = new Date(editTimestamp || new Date());
+                  const parts = e.target.value.split('/');
+                  if (parts.length === 3) { d.setMonth(parseInt(parts[0])-1); d.setDate(parseInt(parts[1])); d.setFullYear(parseInt(parts[2])); if (!isNaN(d)) setEditTimestamp(d.toISOString()); }
+                  else setEditTimestamp(prev => prev);
+                }} placeholder="06/29/2026" />
+              </div>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">Time (HH:MM AM/PM)</label>
+                <input className="form-input" value={editTimestamp ? new Date(editTimestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : ''} onChange={e => {
+                  const d = new Date(editTimestamp || new Date());
+                  const match = e.target.value.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+                  if (match) { let h = parseInt(match[1]); const m = parseInt(match[2]); const period = (match[3]||'').toUpperCase(); if (period === 'PM' && h < 12) h += 12; if (period === 'AM' && h === 12) h = 0; d.setHours(h); d.setMinutes(m); if (!isNaN(d)) setEditTimestamp(d.toISOString()); }
+                }} placeholder="12:16 PM" />
               </div>
               <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label">Action taken / response sent</label>
