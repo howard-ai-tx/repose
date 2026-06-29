@@ -16,7 +16,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --yellow: #EBC736; --yellow-hover: #D9B528; --yellow-active: #C5A11A;
-      --blue: #0EA5E9; --blue-hover: #38BDF8; --blue-active: #0284C7;
+      --blue: #0043af; --blue-hover: #1a5fcc; --blue-active: #002f8a;
       --green: #34C759;
       --red: #FF3B30; --red-hover: #FF453A; --red-active: #D70015;
       --orange: #FF9F0A;
@@ -37,10 +37,7 @@
     /* Layout */
     .app-shell { display: flex; height: 100vh; overflow: hidden; }
     .sidebar { width: 224px; flex-shrink: 0; background: var(--bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-    .sidebar-logo { padding: var(--s6) var(--s4) var(--s4); border-bottom: 1px solid var(--border-light); display: flex; align-items: center; gap: var(--s2); }
-    .sidebar-logo-badge { width: 28px; height: 28px; background: var(--yellow); border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--text); flex-shrink: 0; }
-    .sidebar-logo-name { font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
-    .sidebar-logo-sub { font-size: 12px; color: var(--text-secondary); }
+    .sidebar-logo { padding: var(--s4); border-bottom: 1px solid var(--border-light); display: flex; align-items: center; }
     .sidebar-nav { flex: 1; padding: var(--s2); display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
     .nav-item { display: flex; align-items: center; gap: var(--s2); padding: var(--s2) var(--s3); border-radius: var(--r-md); font-size: 15px; font-weight: 400; color: rgba(0,0,0,.72); cursor: pointer; border: none; background: none; text-align: left; width: 100%; font-family: var(--font); transition: background var(--dur-micro) ease-out, color var(--dur-micro) ease-out; min-height: 44px; }
     .nav-item:hover { background: var(--bg-secondary); color: var(--text); }
@@ -94,10 +91,8 @@
     /* Login */
     .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary); }
     .login-box { width: 400px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-lg); padding: var(--s8); box-shadow: var(--shadow-lg); }
-    .login-logo { display: flex; align-items: center; gap: var(--s3); margin-bottom: var(--s8); }
-    .login-logo-badge { width: 36px; height: 36px; background: var(--yellow); border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; flex-shrink: 0; }
-    .login-logo h1 { font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
-    .login-logo p { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+    .login-logo { display: flex; flex-direction: column; align-items: center; gap: var(--s2); margin-bottom: var(--s8); }
+    .login-logo p { font-size: 13px; color: var(--text-secondary); }
 
     /* IDL Alert component */
     .alert { display: flex; align-items: flex-start; gap: var(--s3); background: var(--bg); border-radius: var(--r-md); padding: var(--s4) var(--s4) var(--s4) calc(var(--s4) - 3px); margin-bottom: var(--s4); }
@@ -669,11 +664,8 @@ function Login({ onLogin }) {
     <div className="login-wrap">
       <div className="login-box">
         <div className="login-logo">
-          <div className="login-logo-badge">R</div>
-          <div>
-            <h1>Repose</h1>
-            <p>Howard AI · Customer Service</p>
-          </div>
+          <img src="Repose-Logo.png" alt="Repose" style={{ height: 48, width: 'auto' }} />
+          <p style={{ marginTop: 4 }}>Howard AI · Customer Service</p>
         </div>
 
         {isFirst && (
@@ -1256,11 +1248,7 @@ function App() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="sidebar-logo">
-          <div className="sidebar-logo-badge">R</div>
-          <div>
-            <div className="sidebar-logo-name">Repose</div>
-            <div className="sidebar-logo-sub">Howard AI · CS</div>
-          </div>
+          <img src="Repose-Logo.png" alt="Repose" style={{ height: 32, width: 'auto' }} />
         </div>
         <nav className="sidebar-nav">
           <button className={`nav-item${activeNav==='dashboard'?' active':''}`} onClick={goHome}>
