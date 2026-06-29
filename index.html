@@ -167,6 +167,7 @@
     .flag-chip.notice { background: rgba(14,165,233,.1); color: #0369A1; }
     .flag-chip.caution { background: rgba(255,159,10,.12); color: #92400E; }
     .flag-chip.hard-caution { background: rgba(255,59,48,.1); color: #991B1B; }
+    .test-badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 7px; border-radius: var(--r-sm); background: #000; color: #fff; margin-left: 6px; flex-shrink: 0; }
 
     /* Empty state */
     .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: var(--s12) var(--s8); min-height: 400px; }
@@ -822,7 +823,7 @@ function Dashboard({ repName, onNewContact, onViewContact }) {
         ) : contacts.map(c => (
           <div key={c.id} className="contact-row" onClick={() => onViewContact(c.id)} role="button" tabIndex={0} onKeyDown={e => e.key === 'Enter' && onViewContact(c.id)}>
             <div className="flex-1 min-w-0">
-              <div className="contact-name">{c.customerName || 'Unknown'}</div>
+              <div className="contact-name" style={{ display: 'flex', alignItems: 'center' }}>{c.customerName || 'Unknown'}{c.isTest && <span className="test-badge">TEST</span>}</div>
               <div className="contact-preview">{c.customerMessage?.slice(0, 110) || '—'}</div>
               <FlagChips flags={c.flagsFired} />
             </div>
@@ -1142,7 +1143,7 @@ function Records({ onViewContact }) {
           <div key={c.id} className="contact-row" onClick={() => onViewContact(c.id)} role="button" tabIndex={0} onKeyDown={e => e.key === 'Enter' && onViewContact(c.id)}>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2" style={{ marginBottom: 2 }}>
-                <div className="contact-name">{c.customerName || 'Unknown'}</div>
+                <div className="contact-name" style={{ display: 'flex', alignItems: 'center' }}>{c.customerName || 'Unknown'}{c.isTest && <span className="test-badge">TEST</span>}</div>
                 {c.customerEmail && <span className="text-sm text-secondary">· {c.customerEmail}</span>}
               </div>
               <div className="contact-preview">{c.customerMessage?.slice(0, 110) || '—'}</div>
@@ -1230,7 +1231,7 @@ function ContactDetail({ contactId, onBack }) {
       <button className="back-btn" onClick={onBack}><i className="ti ti-arrow-left" /> Back</button>
       <div className="page-header-row">
         <div>
-          <h1 className="page-title">{contact.customerName || 'Unknown'}</h1>
+          <h1 className="page-title" style={{ display: 'flex', alignItems: 'center' }}>{contact.customerName || 'Unknown'}{contact.isTest && <span className="test-badge">TEST</span>}</h1>
           <p className="page-sub">{contact.customerEmail && <>{contact.customerEmail} · </>}{formatDateTime(contact.loggedAt || contact.createdAt)}</p>
         </div>
         <div className="status-badge" style={{ fontSize: 14 }}><span className={`status-dot ${contact.status}`} />{contact.status === 'sent' ? 'Sent' : contact.status === 'forwarded' ? 'Forwarded' : 'Draft'}</div>
@@ -1268,6 +1269,10 @@ function ContactDetail({ contactId, onBack }) {
               <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label">Action taken / response sent</label>
                 <textarea className="notes-area" rows={4} value={editAction} onChange={e => setEditAction(e.target.value)} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <input type="checkbox" id="test-flag" checked={!!contact.isTest} onChange={e => { updateContact(contact.id, { isTest: e.target.checked }); refresh(); }} style={{ width: 16, height: 16, cursor: 'pointer' }} />
+                <label htmlFor="test-flag" style={{ fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Flag as test record</label>
               </div>
             </div>
           )}
