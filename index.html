@@ -438,16 +438,28 @@ const { useState, useEffect, useMemo } = React;
 
 // ── Storage ───────────────────────────────────────────────────────────────────
 
-function getCredentials() {
-  const raw = localStorage.getItem('repose_credentials');
-  return raw ? JSON.parse(raw) : { username: 'howard.cs', password: 'repose2024', repName: 'CS Rep' };
+const DEFAULT_USERS = [
+  { firstName: 'Hendrik', lastName: 'Van Geertruyden', employeeId: '922135657', username: 'hvang', password: '20265657' },
+  { firstName: 'Tucker',  lastName: 'Pate',            employeeId: '929266759', username: 'tpate', password: '20266759' },
+];
+function getUsers() {
+  const raw = localStorage.getItem('repose_users');
+  return raw ? JSON.parse(raw) : DEFAULT_USERS;
 }
-function checkLogin(u, p) { const c = getCredentials(); return u === c.username && p === c.password; }
-function getRepName() { return getCredentials().repName || 'CS Rep'; }
+function checkLogin(u, p) { return getUsers().find(x => x.username === u && x.password === p) || null; }
+function getLoggedInUser() {
+  const u = sessionStorage.getItem('repose_username');
+  return getUsers().find(x => x.username === u) || null;
+}
+function getRepName() { const u = getLoggedInUser(); return u ? u.firstName : 'Rep'; }
+function getRepFullName() { const u = getLoggedInUser(); return u ? `${u.firstName} ${u.lastName}` : 'Rep'; }
 function getApiKey() { return ''; }
 function setApiKey(k) {}
 function isLoggedIn() { return sessionStorage.getItem('repose_session') === 'true'; }
-function setLoggedIn(v) { v ? sessionStorage.setItem('repose_session', 'true') : sessionStorage.removeItem('repose_session'); }
+function setLoggedIn(v, username) {
+  if (v) { sessionStorage.setItem('repose_session', 'true'); sessionStorage.setItem('repose_username', username); }
+  else { sessionStorage.removeItem('repose_session'); sessionStorage.removeItem('repose_username'); }
+}
 function getContacts() { const r = localStorage.getItem('repose_contacts'); return r ? JSON.parse(r) : []; }
 function saveContacts(cs) { localStorage.setItem('repose_contacts', JSON.stringify(cs)); }
 function getContact(id) { return getContacts().find(c => c.id === id) || null; }
@@ -657,8 +669,9 @@ function Login({ onLogin }) {
 
   function handleSubmit(e) {
     e.preventDefault(); setError('');
-    if (!checkLogin(username, password)) { setError('Incorrect username or password.'); return; }
-    setLoggedIn(true); onLogin();
+    const user = checkLogin(username, password);
+    if (!user) { setError('Incorrect username or password.'); return; }
+    setLoggedIn(true, user.username); onLogin();
   }
 
   return (
@@ -856,7 +869,7 @@ function FlagScreen({ contactData, onProceedToDraft, onDone }) {
 
   function handleForward(flag) {
     const d = getFlagDetails(flag);
-    saveContact({ ...contactData, status: 'forwarded', finalResponse: `Flagged — forwarded to ${d.forwardLabel || 'Information Services'}`, repName: getRepName(), loggedAt: new Date().toISOString() });
+    saveContact({ ...contactData, status: 'forwarded', finalResponse: `Flagged — forwarded to ${d.forwardLabel || 'Information Services'}`, repName: getRepFullName(), loggedAt: new Date().toISOString() });
     const subj = encodeURIComponent(`[Repose Escalation] ${contactData.subject || 'Customer message'}`);
     const body = encodeURIComponent(`This message has been escalated via Repose.\n\nFlag: ${flag.name.toUpperCase()}\n\n---\n\nOriginal customer message:\n\n${contactData.customerMessage}`);
     window.location.href = `mailto:${d.forwardTo || 'is@howardai.us'}?subject=${subj}&body=${body}`;
@@ -943,7 +956,7 @@ function DraftScreen({ contactData, onDone, onViewContact }) {
   }
 
   function markSent() {
-    const c = { ...contactData, finalResponse: draft, status: 'sent', repName: getRepName(), loggedAt: new Date().toISOString() };
+    const c = { ...contactData, finalResponse: draft, status: 'sent', repName: getRepFullName(), loggedAt: new Date().toISOString() };
     saveContact(c); onViewContact(c.id);
   }
 
@@ -1255,7 +1268,7 @@ function App() {
           </button>
         </nav>
         <div className="sidebar-footer">
-          <div className="rep-name">{repName}</div>
+          <div className="rep-name">{getRepFullName()}</div>
           <div className="rep-role">Customer Service</div>
           <button className="sign-out-btn" onClick={() => { setLoggedIn(false); setAuthed(false); setFlow(null); }}>Sign out</button>
         </div>
