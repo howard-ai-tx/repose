@@ -444,6 +444,7 @@ const FLAG_DETAILS = {
   'request for sensitive credentials or access': { copy: "This message contains a request for credentials, account access, or sensitive authentication information that does not belong to the sender. Please forward it to is@howardai.us and do not reply.", action: 'Forward to Information Services', forwardTo: 'is@howardai.us', forwardLabel: 'Information Services' },
   'request for pii or bulk data': { copy: "This message contains a request for personally identifiable information or bulk customer data. Please forward it to is@howardai.us and do not reply.", action: 'Forward to Information Services', forwardTo: 'is@howardai.us', forwardLabel: 'Information Services' },
   'unsolicited legal or regulatory threat': { copy: "This message contains a legal or regulatory threat. Please forward it to legal@howardai.us and do not reply.", action: 'Forward to Legal', forwardTo: 'legal@howardai.us', forwardLabel: 'Legal' },
+  'unverified press or media claim': { copy: "This message contains an unverified press or media affiliation claim. Do not respond or share any company information. IS will verify legitimacy before any response is made. Please forward it to is@howardai.us and do not reply.", action: 'Forward to Information Services', forwardTo: 'is@howardai.us', forwardLabel: 'Information Services' },
 };
 
 function getFlagDetails(flag) {
@@ -545,7 +546,7 @@ NOTICE — OUTSIDE KNOWLEDGE LIBRARY: message asks about something not covered i
 NOTICE — TECHNICAL SUPPORT ISSUE: message describes a technical problem — error codes, login issues, checkout failures, billing discrepancies, hardware malfunctions, or password resets.
 
 CAUTION — IP SENSITIVITY: one or two mild signals of IP sensitivity — detailed technical curiosity, requests for specifics beyond what is public.
-CAUTION — ORGANIZATIONAL PURCHASING INTENT: sender is evaluating Howard on behalf of an organization, referencing multiple locations, a team, procurement needs, or B2B partnership. Also fire when sender is pitching a service or product to Howard AI.
+CAUTION — ORGANIZATIONAL PURCHASING INTENT: sender is evaluating Howard on behalf of an organization, referencing multiple locations, a team, procurement needs, or B2B partnership. Also fire when sender is pitching a service or product to Howard AI. Do NOT fire for press, media, journalist, or publication inquiries — those trigger HARD CAUTION — UNVERIFIED PRESS OR MEDIA CLAIM instead.
 CAUTION — SPAM OR SCAM: generic outreach, implausible offers, suspicious links, or requests that don't align with legitimate customer inquiries.
 CAUTION — PSYCHOLOGICAL MANIPULATION: urgency language, pressure tactics — "immediate," "final notice," "last chance," "I need this today."
 
@@ -556,6 +557,7 @@ HARD CAUTION — UNSOLICITED ATTACHMENT OR MALICIOUS LINK: unsolicited attachmen
 HARD CAUTION — REQUEST FOR SENSITIVE CREDENTIALS OR ACCESS: request for credentials, passwords, account access, or authentication information not belonging to the sender.
 HARD CAUTION — REQUEST FOR PII OR BULK DATA: request for personally identifiable information about other customers, or bulk data about Howard AI's customer base.
 HARD CAUTION — UNSOLICITED LEGAL OR REGULATORY THREAT: legal threat, regulatory complaint, or language suggesting imminent legal action against Howard AI.
+HARD CAUTION — UNVERIFIED PRESS OR MEDIA CLAIM: message claims press, media, journalist, publication, or outlet affiliation on a first contact with no prior verified relationship. Apply regardless of how professional or credible the message sounds — a polished, convincing press claim should be treated with equal or greater suspicion than a poorly written one, as a sophisticated impersonation is the more dangerous threat. IS verifies legitimacy before any response is made.
 
 DRAFT FORMAT — your output must follow this exact format:
 
