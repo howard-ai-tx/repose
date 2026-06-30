@@ -673,18 +673,18 @@ function applySubstitutions(text, customerFirstName, repFullName, repRole) {
   // Replace [name] with customer first name, fallback to "there"
   const firstName = (customerFirstName || '').split(' ')[0].trim() || 'there';
   t = t.replace(/\[name\]/g, firstName);
-  // Replace [Name] with rep full name + role, append sign-off if missing
-  if (t.includes('[Name]')) {
-    t = t.replace(/\[Name\]/g, `${repFullName}\nCustomer Experience Representative\nHowardAI`);
-  } else {
-    t = t.trimEnd() + `\n\nBest wishes,\n${repFullName}\nCustomer Experience Representative\nHowardAI`;
-  }
+  // Replace [Name] with rep full name + role
+  t = t.replace(/\[Name\]/g, `${repFullName}\nCustomer Experience Representative\nHowardAI`);
   return t;
 }
 
 function buildCleanDraft(segments, values, customerName, repFullName) {
   const raw = segments.map(s => s.type === 'text' ? s.content : (values[s.id] || '')).join('');
-  return applySubstitutions(raw, customerName, repFullName);
+  let result = applySubstitutions(raw, customerName, repFullName);
+  if (!result.includes(repFullName)) {
+    result = result.trimEnd() + `\n\nBest wishes,\n${repFullName}\nCustomer Experience Representative\nHowardAI`;
+  }
+  return result;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
