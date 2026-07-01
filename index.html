@@ -1208,6 +1208,51 @@ function ContactDetail({ contactId, onBack }) {
     if (!window.confirm(`Permanently delete the record for ${contact.customerName}? This cannot be undone.`)) return;
     const cs = getContacts().filter(c => c.id !== contact.id); saveContacts(cs); onBack();
   }
+
+  function printRecord() {
+    const esc = s => (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const flagsHtml = (contact.flagsFired||[]).map(f => `<span class="p-flag ${f.severity}">${esc(SEVERITY_LABEL[f.severity])} — ${esc(f.name)}</span>`).join('');
+    const remindersHtml = (contact.reminders||[]).map(r => `<div class="p-reminder">${r.dismissed ? '[Dismissed] ' : ''}${esc(r.copy)} — ${r.type === 'time' && r.triggerDate ? `Follow up ${new Date(r.triggerDate).toLocaleDateString('en-US')}` : `Event: ${esc(r.triggerEvent||'when relevant')}`}</div>`).join('');
+    const w = window.open('', '_blank');
+    w.document.write(`<!DOCTYPE html><html><head><title>Repose Record — ${esc(contact.customerName)}</title>
+      <style>
+        body { font-family: -apple-system, sans-serif; color: #000; max-width: 700px; margin: 40px auto; padding: 0 20px; }
+        .p-header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; border-bottom: 2px solid #000; padding-bottom: 16px; }
+        .p-header img { height: 40px; }
+        .p-title { font-size: 22px; font-weight: 700; }
+        .p-sub { font-size: 13px; color: #555; margin-top: 2px; }
+        .p-section { margin-bottom: 20px; }
+        .p-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #888; margin-bottom: 6px; }
+        .p-box { background: #f6f6f6; border: 1px solid #ccc; border-radius: 8px; padding: 14px; white-space: pre-wrap; font-size: 14px; line-height: 1.6; }
+        .p-flag { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 3px 8px; border-radius: 6px; margin: 0 6px 6px 0; }
+        .p-flag.notice { background: #E0F2FE; color: #0369A1; }
+        .p-flag.caution { background: #FEF3C7; color: #92400E; }
+        .p-flag.hard-caution { background: #FEE2E2; color: #991B1B; }
+        .p-reminder { font-size: 13px; margin-bottom: 4px; }
+        .p-meta { font-size: 13px; color: #333; margin-bottom: 4px; }
+        @media print { body { margin: 0; padding: 20px; } }
+      </style></head><body>
+      <div class="p-header">
+        <img src="${window.location.origin}${window.location.pathname.replace(/[^/]*$/,'')}Repose-Logo.png" />
+        <div>
+          <div class="p-title">${esc(contact.customerName || 'Unknown')}${contact.isTest ? ' [TEST]' : ''}</div>
+          <div class="p-sub">${esc(contact.customerEmail || '')}</div>
+        </div>
+      </div>
+      <div class="p-section">
+        <div class="p-meta"><strong>Status:</strong> ${esc(contact.status)}</div>
+        <div class="p-meta"><strong>Logged:</strong> ${esc(formatDateTime(contact.loggedAt || contact.createdAt))}</div>
+        <div class="p-meta"><strong>Handled by:</strong> ${esc(contact.repName || '')}</div>
+      </div>
+      ${flagsHtml ? `<div class="p-section"><div class="p-label">Flags fired</div>${flagsHtml}</div>` : ''}
+      <div class="p-section"><div class="p-label">Customer message</div><div class="p-box">${esc(contact.customerMessage)}</div></div>
+      ${contact.finalResponse ? `<div class="p-section"><div class="p-label">${contact.status === 'forwarded' ? 'Action taken' : 'Response sent'}</div><div class="p-box">${esc(contact.finalResponse)}</div></div>` : ''}
+      ${contact.notes ? `<div class="p-section"><div class="p-label">Internal notes</div><div class="p-box">${esc(contact.notes)}</div></div>` : ''}
+      ${remindersHtml ? `<div class="p-section"><div class="p-label">Reminders</div>${remindersHtml}</div>` : ''}
+      </body></html>`);
+    w.document.close();
+    w.onload = () => w.print();
+  }
   useEffect(() => { refresh(); }, [contactId]);
 
   if (!contact) return (
@@ -1236,7 +1281,10 @@ function ContactDetail({ contactId, onBack }) {
           <h1 className="page-title" style={{ display: 'flex', alignItems: 'center' }}>{contact.customerName || 'Unknown'}{contact.isTest && <span className="test-badge">TEST</span>}</h1>
           <p className="page-sub">{contact.customerEmail && <>{contact.customerEmail} · </>}{formatDateTime(contact.loggedAt || contact.createdAt)}</p>
         </div>
-        <div className="status-badge" style={{ fontSize: 14 }}><span className={`status-dot ${contact.status}`} />{contact.status === 'sent' ? 'Sent' : contact.status === 'forwarded' ? 'Forwarded' : 'Draft'}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button className="btn btn-secondary btn-sm" onClick={printRecord}><i className="ti ti-printer" /> Print</button>
+          <div className="status-badge" style={{ fontSize: 14 }}><span className={`status-dot ${contact.status}`} />{contact.status === 'sent' ? 'Sent' : contact.status === 'forwarded' ? 'Forwarded' : 'Draft'}</div>
+        </div>
       </div>
 
       {admin && (
