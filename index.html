@@ -12,6 +12,7 @@
   <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <style>
     /* ── Howard AI IDL ─────────────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1209,6 +1210,71 @@ function ContactDetail({ contactId, onBack }) {
     const cs = getContacts().filter(c => c.id !== contact.id); saveContacts(cs); onBack();
   }
 
+  async function downloadPdf() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+    const margin = 48; const pageW = doc.internal.pageSize.getWidth(); const maxW = pageW - margin * 2;
+    let y = margin;
+
+    function addLogo() {
+      return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => {
+          const h = 32, w = img.width * (h / img.height);
+          doc.addImage(img, 'PNG', margin, y, w, h);
+          resolve(w);
+        };
+        img.onerror = () => resolve(0);
+        img.src = 'Repose-Logo.png';
+      });
+    }
+
+    function ensureSpace(lines) {
+      if (y + lines * 14 > doc.internal.pageSize.getHeight() - margin) { doc.addPage(); y = margin; }
+    }
+
+    function addLabel(text) {
+      ensureSpace(2);
+      doc.setFont(undefined, 'bold'); doc.setFontSize(9); doc.setTextColor(120);
+      doc.text(text.toUpperCase(), margin, y); y += 14;
+      doc.setTextColor(0);
+    }
+
+    function addBody(text) {
+      doc.setFont(undefined, 'normal'); doc.setFontSize(11);
+      const lines = doc.splitTextToSize(text || '', maxW);
+      lines.forEach(line => { ensureSpace(1); doc.text(line, margin, y); y += 15; });
+      y += 8;
+    }
+
+    const logoW = await addLogo();
+    doc.setFont(undefined, 'bold'); doc.setFontSize(16);
+    doc.text(`${contact.customerName || 'Unknown'}${contact.isTest ? ' [TEST]' : ''}`, margin + logoW + 12, y + 22);
+    doc.setFont(undefined, 'normal'); doc.setFontSize(10); doc.setTextColor(90);
+    doc.text(contact.customerEmail || '', margin + logoW + 12, y + 36);
+    doc.setTextColor(0);
+    y += 60;
+    doc.setDrawColor(0); doc.line(margin, y, pageW - margin, y); y += 24;
+
+    addBody(`Status: ${contact.status}`);
+    y -= 8; addBody(`Logged: ${formatDateTime(contact.loggedAt || contact.createdAt)}`);
+    y -= 8; addBody(`Handled by: ${contact.repName || ''}`);
+
+    if ((contact.flagsFired||[]).length) {
+      addLabel('Flags fired');
+      addBody(contact.flagsFired.map(f => `${SEVERITY_LABEL[f.severity]} — ${f.name}`).join('\n'));
+    }
+    addLabel('Customer message'); addBody(contact.customerMessage);
+    if (contact.finalResponse) { addLabel(contact.status === 'forwarded' ? 'Action taken' : 'Response sent'); addBody(contact.finalResponse); }
+    if (contact.notes) { addLabel('Internal notes'); addBody(contact.notes); }
+    if ((contact.reminders||[]).length) {
+      addLabel('Reminders');
+      addBody(contact.reminders.map(r => `${r.dismissed ? '[Dismissed] ' : ''}${r.copy} — ${r.type === 'time' && r.triggerDate ? `Follow up ${new Date(r.triggerDate).toLocaleDateString('en-US')}` : `Event: ${r.triggerEvent||'when relevant'}`}`).join('\n'));
+    }
+
+    doc.save(`Repose — ${contact.customerName || 'Unknown'}.pdf`);
+  }
+
   function printRecord() {
     const esc = s => (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const flagsHtml = (contact.flagsFired||[]).map(f => `<span class="p-flag ${f.severity}">${esc(SEVERITY_LABEL[f.severity])} — ${esc(f.name)}</span>`).join('');
@@ -1282,7 +1348,7 @@ function ContactDetail({ contactId, onBack }) {
           <p className="page-sub">{contact.customerEmail && <>{contact.customerEmail} · </>}{formatDateTime(contact.loggedAt || contact.createdAt)}</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button className="btn btn-secondary btn-sm" onClick={printRecord}><i className="ti ti-file-type-pdf" /> Save PDF</button>
+          <button className="btn btn-secondary btn-sm" onClick={downloadPdf}><i className="ti ti-file-type-pdf" /> Save</button>
           <button className="btn btn-secondary btn-sm" onClick={printRecord}><i className="ti ti-printer" /> Print</button>
           <div className="status-badge" style={{ fontSize: 14 }}><span className={`status-dot ${contact.status}`} />{contact.status === 'sent' ? 'Sent' : contact.status === 'forwarded' ? 'Forwarded' : 'Draft'}</div>
         </div>
