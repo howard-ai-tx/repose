@@ -1282,6 +1282,7 @@ function ContactDetail({ contactId, onBack }) {
           <p className="page-sub">{contact.customerEmail && <>{contact.customerEmail} · </>}{formatDateTime(contact.loggedAt || contact.createdAt)}</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button className="btn btn-secondary btn-sm" onClick={printRecord}><i className="ti ti-file-type-pdf" /> Save PDF</button>
           <button className="btn btn-secondary btn-sm" onClick={printRecord}><i className="ti ti-printer" /> Print</button>
           <div className="status-badge" style={{ fontSize: 14 }}><span className={`status-dot ${contact.status}`} />{contact.status === 'sent' ? 'Sent' : contact.status === 'forwarded' ? 'Forwarded' : 'Draft'}</div>
         </div>
